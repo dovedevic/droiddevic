@@ -29,19 +29,19 @@ class GameObject(Game):
 
     @staticmethod
     def get_game_short_name():
-        return "TTTT"
+        return "TTT"
 
     async def setup(self, args):
         self.__board = [['⬛', '⬛', '⬛'], ['⬛', '⬛', '⬛'], ['⬛', '⬛', '⬛']]
         self.__p1 = '❌'
         self.__p2 = '⭕'
         self.__turns = 0
-        self.__turn = 0
+        self.__current_turn_index = 0
 
         logger.info('Setting up a TicTacToe game...')
         if len(args) > 0 or (len(args) == 1 and args[0].lower() == 'help'):
             logger.debug('Could not setup game, invalid arguments or user requested help')
-            return SetupFailure(f'**Command \'play {self.get_game_short_name()}\' Usage: **`>play {self.get_game_short_name()} [users-to-play, ...]`')
+            return SetupFailure(f'**Command \'play {self.get_game_short_name()}\' Usage: **`>play {self.get_game_short_name()} [user-to-play]`')
         elif len(self.players) > 2:
             logger.debug('Could not setup game, user provided too many users to play')
             return SetupFailure('Why are you trying to play TicTacToe with more than 1 person? That\'s not how this works...')
@@ -49,12 +49,13 @@ class GameObject(Game):
             logger.debug('Could not setup game, user provided too few users to play')
             return SetupFailure('You can\'t play TicTacToe by yourself.')
         logger.debug('Passed standard checks setting up turn...')
-        self.__turn = random.randint(0, 1)
+        random.shuffle(self.players)
+        self.__current_turn_index = 0
         await self.show()
 
         pidx = 0
         for player in self.players:
-            if pidx == self.__turn:
+            if pidx == self.__current_turn_index:
                 await self.channel.send(f'{player.mention}, you go first! Good luck!')
             else:
                 await self.channel.send(f'{player.mention}, waiting for your turn...')
@@ -62,19 +63,23 @@ class GameObject(Game):
 
         return SetupSuccess(self)
 
-    async def move(self, args):
+    async def move(self, args, player):
+        logger.debug('Checking turn...')
+        if player != self.players[self.__current_turn_index]:
+            await self.channel.send('It is not your turn currently.')
+            return
         logger.debug('Checking arguments...')
         if len(args) != 2:
-            await self.channel.send('You need to specify a valid position on the board. `>move [col] [row]`')
-        elif not args[0].isdigit() or not args[1].isdigit():
+            await self.channel.send('You need to specify a valid position on the board. `>move [row] [col]`')
+        elif type(args[0]) != int or type(args[1]) != int:
             await self.channel.send('Invalid position. Both arguments need to be numbers')
-        elif int(args[0]) < 0 or int(args[0]) > 3 or int(args[1]) < 0 or int(args[1]) > 3:
+        elif args[0] <= 0 or args[0] > 3 or args[1] <= 0 or args[1] > 3:
             await self.channel.send('You need to specify a valid position on the board.')
-        elif self.__board[int(args[1]) - 1][int(args[0]) - 1] != '⬛':
+        elif self.__board[args[1] - 1][args[0] - 1] != '⬛':
             await self.channel.send('That position is not empty. Please choose an empty spot.')
         else:
             logger.debug('Setting position on board')
-            self.__board[int(args[1]) - 1][int(args[0]) - 1] = self.get_user_icon()
+            self.__board[args[1] - 1][args[0] - 1] = self.get_user_icon()
             self.__turns += 1
             """
             First 3 checks: Horizontal Axis
@@ -120,16 +125,16 @@ class GameObject(Game):
                     await self.channel.send('It\'s a draw!')
 
     def next_turn(self):
-        self.__turn = (self.__turn + 1) % 2
+        self.__current_turn_index = (self.__current_turn_index + 1) % len(self.players)
 
     def get_user_icon(self):
-        if self.__turn == 0:
+        if self.__current_turn_index == 0:
             return self.__p1
         else:
             return self.__p2
 
     def get_current_player(self):
-        return self.players[self.__turn]
+        return self.players[self.__current_turn_index]
 
     async def show(self):
         board = f'{"".join(self.__board[0])}\n{"".join(self.__board[1])}\n{"".join(self.__board[2])}'
