@@ -71,7 +71,7 @@ class GameObject(Game):
         else:  # Some game conditions were not met, thus the game cannot be setup...
             return SetupFailure("The game can not be setup because of some default reason!")
 
-    async def move(self, args):
+    async def move(self, args, player):
         # TODO: Define some game logic
         # ...
         # TODO: Update whos turn it is
