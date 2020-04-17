@@ -105,8 +105,8 @@ class GameObject(Game):
             logger.debug("Invalid move or requested help, showing help menu...")
             await self.channel.send("**Command \'move\' Usage:** `>move [column(1-10)] [row(1-10)]`")
             return
-        logger.debug("Checking if column is appropriate")
-        if self._get_item_at(args[0] - 1, 0) != ':black_circle:':
+        logger.debug("Checking if place is appropriate")
+        if self._get_item_at(args[0] - 1, args[1] - 1) != ':black_circle:':
             logger.debug("Invalid move, column full")
             await self.channel.send("You can't put a piece in that spot, try somewhere else!")
             return
