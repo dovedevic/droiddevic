@@ -103,7 +103,7 @@ class GameObject(Game):
         if self.__board[1].moves + self.__board[1].bombs == self.__board[1].size ** 2:
             await self.channel.send(self.__board[0].parse())
             logger.debug('Clearing game...')
-            self.end_game()
+            await self.end_game()
             logger.debug('Player has won, sending message')
             await self.channel.send('You won! Congratulations!')
 
